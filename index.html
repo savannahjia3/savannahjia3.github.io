@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Savannah Jia</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Mobile header -->
+  <header class="mobile-header">
+    <a href="#" class="mobile-name" data-section="about">Savannah Jia</a>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <a href="#" class="site-name" data-section="about">Savannah Jia</a>
+      <nav>
+        <ul class="nav-list" id="nav-list">
+          <li class="nav-section" id="nav-paintings">
+            <span class="nav-section-title" data-medium="paintings">paintings</span>
+            <ul class="nav-years" id="years-paintings"></ul>
+          </li>
+          <li class="nav-section" id="nav-works-on-paper">
+            <span class="nav-section-title" data-medium="works-on-paper">works on paper</span>
+            <ul class="nav-years" id="years-works-on-paper"></ul>
+          </li>
+          <li class="nav-section" id="nav-sculpture">
+            <span class="nav-section-title" data-medium="sculpture">sculpture</span>
+            <ul class="nav-years" id="years-sculpture"></ul>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Main content -->
+  <main class="main-content" id="main-content">
+
+    <!-- About section -->
+    <section id="section-about" class="content-section hidden">
+      <div class="about-wrap">
+        <div class="about-text">
+          <p>Savannah Jia is a fine arts student at Citrus College in Glendora, California. Her practice spans painting, works on paper, and sculpture, exploring [placeholder — write your own statement here].</p>
+          <p>She is currently pursuing transfer to a four-year fine arts program.</p>
+        </div>
+        <div class="about-contact">
+          <p><a href="mailto:savannahjia3@gmail.com">savannahjia3@gmail.com</a></p>
+          <p><a href="https://instagram.com/sav.jia" target="_blank" rel="noopener">@sav.jia</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Works grid section -->
+    <section id="section-works" class="content-section hidden">
+      <div class="section-heading" id="section-heading"></div>
+      <div class="works-grid" id="works-grid"></div>
+    </section>
+
+    <!-- Default landing (home) -->
+    <section id="section-home" class="content-section">
+      <div class="home-splash">
+        <img src="https://picsum.photos/seed/sj-hero/1200/900" alt="Savannah Jia">
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
+    <button class="lb-close" id="lb-close" aria-label="Close">&#215;</button>
+    <div class="lb-body">
+      <button class="lb-prev" id="lb-prev" aria-label="Previous">&#8249;</button>
+      <div class="lb-image-wrap">
+        <img id="lb-img" src="" alt="">
+        <div class="lb-caption" id="lb-caption"></div>
+      </div>
+      <button class="lb-next" id="lb-next" aria-label="Next">&#8250;</button>
+    </div>
+    <div class="lb-filmstrip-wrap">
+      <div class="lb-filmstrip" id="lb-filmstrip"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
