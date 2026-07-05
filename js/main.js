@@ -122,20 +122,36 @@ function showWorks(medium, yearKey) {
   });
 }
 
-/* ── Splash / home setup ─────────────────────────────────── */
-function setupSplash() {
-  const featured = allWorks().filter(w => w.year).sort((a, b) => b.year - a.year)[0];
-  if (!featured) return;
+/* ── Featured works on home page ─────────────────────────── */
+function setupFeatured() {
+  const slugs    = ['death-by-magnitude', 'leda', 'mythos'];
+  const featured = slugs.map(slug => allWorks().find(w => w.slug === slug)).filter(Boolean);
+  const container = $('featured-grid');
+  if (!container) return;
 
-  const splashImg = $('splash-img');
-  const splashCap = $('splash-caption');
-  splashImg.src = featured.img;
-  splashImg.alt = featured.title;
-  splashCap.textContent = `${featured.title}  ·  ${featured.year}`;
+  container.innerHTML = featured.map(w => `
+    <div class="featured-item" data-slug="${w.slug}">
+      <div class="featured-img-wrap">
+        <img src="${w.thumb}" alt="${w.title}" loading="lazy">
+      </div>
+      <div class="featured-caption">
+        <span class="featured-title">${w.title}</span>
+        <span class="featured-meta">${[w.materials, w.year].filter(Boolean).join('  ·  ')}</span>
+      </div>
+    </div>
+  `).join('');
 
-  $('splash').addEventListener('click', () => {
-    state.currentWorks = [featured];
-    openLightbox(0);
+  container.querySelectorAll('.featured-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const work = featured.find(w => w.slug === item.dataset.slug);
+      if (!work) return;
+      const mediumWorks = artworks[work.medium] || [];
+      state.currentMedium = work.medium;
+      state.currentYear   = String(work.year);
+      state.currentWorks  = mediumWorks;
+      const idx = mediumWorks.findIndex(w => w.slug === work.slug);
+      openLightbox(idx >= 0 ? idx : 0);
+    });
   });
 }
 
@@ -304,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   zoomHint    = $('zoom-hint');
 
   buildNav();
-  setupSplash();
+  setupFeatured();
 
   /* Nav & lightbox controls */
   document.addEventListener('click', handleNavClick);
