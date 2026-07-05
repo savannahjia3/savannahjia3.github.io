@@ -224,7 +224,7 @@ body.menu-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate
 .featured-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  gap: 20px;
   padding: 48px;
   align-items: start;
 }
@@ -289,36 +289,36 @@ body.menu-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate
   break-inside: avoid;
   margin-bottom: 20px;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
 }
 
 .grid-item img {
   width: 100%;
   height: auto;
   display: block;
-  transition: transform 0.5s var(--ease), opacity 0.2s;
+  transition: transform 0.5s var(--ease);
 }
-.grid-item:hover img {
-  transform: scale(1.02);
-  opacity: 0.92;
-}
+.grid-item:hover img { transform: scale(1.02); }
 
 .grid-item-caption {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 28px 16px 14px;
-  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%);
-  color: rgba(255,255,255,0.9);
-  font-family: var(--serif);
-  font-size: 13px;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  opacity: 0;
-  transition: opacity 0.25s var(--ease);
-  pointer-events: none;
+  padding: 12px 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
-.grid-item:hover .grid-item-caption { opacity: 1; }
+.grid-item-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.grid-item-meta {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  text-transform: uppercase;
+}
 
 /* ── Prose pages (about, contact) ────────────────────────── */
 .prose-page {

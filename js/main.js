@@ -113,7 +113,10 @@ function showWorks(medium, yearKey) {
   grid.innerHTML = works.map((w, i) => `
     <div class="grid-item" data-index="${i}">
       <img src="${w.thumb}" alt="${w.title}" loading="lazy">
-      <div class="grid-item-caption">${w.title}</div>
+      <div class="grid-item-caption">
+        <span class="grid-item-title">${w.title}</span>
+        <span class="grid-item-meta">${[w.materials, w.year].filter(Boolean).join('  ·  ')}</span>
+      </div>
     </div>
   `).join('');
 
