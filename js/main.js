@@ -243,31 +243,16 @@ function enterZoom() {
 
   zoomImg.src = w.img;
   zoomImg.alt = w.title;
-  zoom.scale = 1;
+  zoom.scale    = 1.5;
+  zoom.minScale = 0.3;
   zoom.tx = 0;
   zoom.ty = 0;
-
-  const doFit = () => fitZoomImage();
-  if (zoomImg.complete && zoomImg.naturalWidth) { doFit(); }
-  else { zoomImg.onload = doFit; }
+  applyZoomTransform(false);
 
   lbZoomView.classList.remove('hidden');
   zoomHint.classList.remove('hide');
   setTimeout(() => zoomHint.classList.add('hide'), 2800);
   updateZoomIcon(true);
-}
-
-function fitZoomImage() {
-  const vw = lbZoomView.clientWidth;
-  const vh = lbZoomView.clientHeight;
-  const iw = zoomImg.naturalWidth  || 1200;
-  const ih = zoomImg.naturalHeight || 900;
-  const fit = Math.min(vw / iw, vh / ih) * 0.92;
-  zoom.scale    = fit;
-  zoom.minScale = fit * 0.4;
-  zoom.tx = 0;
-  zoom.ty = 0;
-  applyZoomTransform(false);
 }
 
 function exitZoom() {
