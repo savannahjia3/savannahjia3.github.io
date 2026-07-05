@@ -12,6 +12,8 @@
   --text-muted:   #999990;
   --border:       #e8e6e0;
   --accent:       #111110;
+  --ink:          #111110;
+  --ink-light:    #888880;
 
   --serif:        'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
   --serif-sc:     'Cormorant SC', 'Palatino Linotype', Georgia, serif;
