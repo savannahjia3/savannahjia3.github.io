@@ -438,6 +438,7 @@ body.lb-open { overflow: hidden; }
   width: auto;
   height: auto;
   box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+  cursor: zoom-in;
 }
 
 .lb-meta {

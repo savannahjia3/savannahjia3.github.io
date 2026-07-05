@@ -252,13 +252,11 @@ function enterZoom() {
   lbZoomView.classList.remove('hidden');
   zoomHint.classList.remove('hide');
   setTimeout(() => zoomHint.classList.add('hide'), 2800);
-  updateZoomIcon(true);
 }
 
 function exitZoom() {
   lbZoomView.classList.add('hidden');
   zoomImg.src = '';
-  updateZoomIcon(false);
 }
 
 function applyZoomTransform(animated) {
@@ -283,17 +281,6 @@ function pinchDist(touches) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function updateZoomIcon(active) {
-  const btn = $('lb-zoom-toggle');
-  if (!btn) return;
-  if (active) {
-    btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`;
-    btn.title = 'Exit zoom';
-  } else {
-    btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`;
-    btn.title = 'Zoom in';
-  }
-}
 
 /* ── Init ────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -325,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('lb-close').addEventListener('click', closeLightbox);
   $('lb-prev').addEventListener('click',  () => navigate(-1));
   $('lb-next').addEventListener('click',  () => navigate(1));
-  $('lb-zoom-toggle').addEventListener('click', toggleZoom);
   $('zoom-exit').addEventListener('click', exitZoom);
 
   $('hamburger').addEventListener('click', () => document.body.classList.toggle('menu-open'));
@@ -342,6 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowRight') navigate(1);
     if (e.key === 'z' || e.key === 'Z') toggleZoom();
   });
+
+  /* Click image to enter zoom */
+  lbImg.addEventListener('click', enterZoom);
 
   /* Wheel zoom */
   lbZoomView.addEventListener('wheel', e => {
