@@ -461,25 +461,23 @@ body.lb-open { overflow: hidden; }
 .lb-meta {
   flex-shrink: 0;
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 18px 0 20px;
-  font-family: var(--serif);
-  font-weight: 300;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 0 18px;
 }
 .lb-title {
-  font-size: 18px;
-  font-style: italic;
-  color: var(--text);
-}
-.lb-sep {
-  color: var(--text-muted);
-  font-size: 14px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--ink);
 }
 .lb-info {
-  font-size: 13px;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  text-transform: uppercase;
 }
 
 /* Filmstrip */
