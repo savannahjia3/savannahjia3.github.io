@@ -1,0 +1,124 @@
+# Savannah Jia — Artwork Metadata
+#
+# This file is the source of truth for the portfolio site.
+# After editing, run `node build.js` locally, or just push — GitHub Actions runs it automatically.
+#
+# Fields:
+#   slug        - filename (no extension). Must match images/{medium}/web/{slug}.jpg
+#   title       - display title
+#   year        - integer, or null if unknown
+#   medium      - materials
+#   dimensions  - physical size (e.g. "18 × 24 in")
+#   notes       - optional, not shown on site
+
+paintings:
+  - slug: death-by-magnitude
+    title: Death by Magnitude
+    year: 2025
+    medium: Oil on wood
+    dimensions: 18 × 24 in
+
+  - slug: still-lovely
+    title: Still Lovely
+    year: 2024
+    medium: Acrylic on wood
+    dimensions: 6 × 8 in
+
+  - slug: no-redemption-in-death
+    title: No Redemption in Death
+    year: 2025
+    medium: Oil on canvas
+    dimensions: 12 × 36 in
+
+  - slug: still-life-with-buddha-head
+    title: Still Life with Buddha Head
+    year: 2024
+    medium: Acrylic on wood
+    dimensions: 18 × 24 in
+
+  - slug: tenant-of-the-heights
+    title: Tenant of the Heights
+    year: 2024
+    medium: Acrylic on canvas
+    dimensions: 8 × 10 in
+
+  - slug: spit-the-bones-out
+    title: Spit the Bones Out
+    year: 2025
+    medium: Oil on wood, acrylic grisaille, modeling paste, clay
+    dimensions: 11 × 14 in
+
+  - slug: trick-mountain
+    title: Trick Mountain
+    year: 2024
+    medium: Acrylic on hardboard
+    dimensions: 8 × 10 in
+
+  - slug: untitled-iii
+    title: Untitled
+    year: 2025
+    medium: Oil on canvas
+    dimensions: 11 × 14 in
+
+  - slug: portrait-with-dog
+    title: Portrait with Dog
+    year: 2025
+    medium: Oil on canvas
+    dimensions: 16 × 20 in
+
+  - slug: self-portrait-with-paper-cranes
+    title: Self Portrait with Paper Cranes
+    year: 2026
+    medium: Oil on canvas
+    dimensions: 18 × 24 in
+
+works_on_paper:
+  - slug: untitled-i
+    title: Untitled
+    year: 2025
+    medium: Watercolor on paper
+    dimensions: 9 × 12 in
+
+  - slug: leda
+    title: Leda
+    year: 2024
+    medium: Charcoal on paper
+    dimensions: 9 × 12 in
+
+  - slug: mythos
+    title: Mythos
+    year: 2025
+    medium: Ink and watercolor on paper
+    dimensions: 22 × 30 in
+
+  - slug: okck
+    title: OKCK
+    year: 2025
+    medium: Ink on paper
+    dimensions: 18 × 24 in
+
+  - slug: todo-list
+    title: To-do List
+    year: 2025
+    medium: Ink on paper
+    dimensions: 8.5 × 14 in
+
+  - slug: never-let-me-go
+    title: Never Let Me Go
+    year: 2024
+    medium: Ink on paper
+    dimensions: 8.5 × 14 in
+
+  - slug: vignettes
+    title: Vignettes
+    year: 2025
+    medium: Graphite on paper
+    dimensions: 14 × 17 in
+
+sculpture: []
+  # Add sculpture works here as:
+  # - slug: my-sculpture
+  #   title: My Sculpture
+  #   year: 2025
+  #   medium: Clay
+  #   dimensions: 12 × 8 × 6 in

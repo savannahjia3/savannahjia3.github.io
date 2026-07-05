@@ -1,0 +1,22 @@
+{
+  "name": "savannah-portfolio",
+  "version": "1.0.0",
+  "description": "Savannah Jia — artist portfolio site",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/savannahjia3/savannahjia3.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/savannahjia3/savannahjia3.github.io/issues"
+  },
+  "homepage": "https://github.com/savannahjia3/savannahjia3.github.io#readme",
+  "devDependencies": {
+    "js-yaml": "^5.2.1"
+  }
+}
