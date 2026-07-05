@@ -1,211 +1,442 @@
-(() => {
-  // --- State ---
-  let currentSection = 'home';
-  let currentMedium = null;
-  let currentYear = null;
-  let lightboxItems = [];
-  let lightboxIndex = 0;
+/* ═══════════════════════════════════════════════════════════
+   Savannah Jia — Portfolio JS
+   ═══════════════════════════════════════════════════════════ */
 
-  // --- DOM refs ---
-  const mainContent = document.getElementById('main-content');
-  const navList = document.getElementById('nav-list');
-  const hamburger = document.getElementById('hamburger');
-  const sidebar = document.getElementById('sidebar');
-  const sidebarOverlay = document.getElementById('sidebar-overlay');
-  const lightbox = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lb-img');
-  const lbCaption = document.getElementById('lb-caption');
-  const lbFilmstrip = document.getElementById('lb-filmstrip');
-  const lbClose = document.getElementById('lb-close');
-  const lbPrev = document.getElementById('lb-prev');
-  const lbNext = document.getElementById('lb-next');
-  const worksGrid = document.getElementById('works-grid');
-  const sectionHeading = document.getElementById('section-heading');
+/* ── State ───────────────────────────────────────────────── */
+const state = {
+  currentMedium: null,
+  currentYear:   null,
+  currentWorks:  [],
+  lbIndex:       0,
+};
 
-  // --- Helpers ---
-  function showSection(id) {
-    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    const el = document.getElementById('section-' + id);
-    if (el) el.classList.remove('hidden');
-    currentSection = id;
-    // Close sidebar on mobile
-    closeSidebar();
+/* ── DOM refs ────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+const views       = { home: $('view-home'), works: $('view-works'), about: $('view-about'), contact: $('view-contact') };
+const grid        = $('grid');
+const worksLabel  = $('works-label');
+const lbEl        = $('lightbox');
+const lbImg       = $('lb-img');
+const lbTitle     = $('lb-title');
+const lbInfo      = $('lb-info');
+const lbFilmstrip = $('lb-filmstrip');
+const lbZoomView  = $('lb-zoom-view');
+const zoomCanvas  = $('zoom-canvas');
+const zoomImg     = $('zoom-img');
+const zoomHint    = $('zoom-hint');
+
+/* ── Utilities ───────────────────────────────────────────── */
+function showView(name) {
+  Object.entries(views).forEach(([k, el]) => {
+    if (!el) return;
+    el.classList.toggle('hidden', k !== name);
+    el.classList.toggle('active', k === name);
+  });
+}
+
+function allWorks() {
+  return [
+    ...(artworks.paintings          || []),
+    ...(artworks['works-on-paper']  || []),
+    ...(artworks.sculpture          || []),
+  ];
+}
+
+/* ── Sidebar: build year lists ───────────────────────────── */
+function buildNav() {
+  const mediums = [
+    { medium: 'paintings',       elId: 'years-paintings' },
+    { medium: 'works-on-paper',  elId: 'years-works-on-paper' },
+    { medium: 'sculpture',       elId: 'years-sculpture' },
+  ];
+
+  mediums.forEach(({ medium, elId }) => {
+    const works   = artworks[medium] || [];
+    const yearsEl = $(elId);
+    if (!yearsEl) return;
+
+    const years = [...new Set(works.map(w => w.year).filter(Boolean))].sort((a, b) => b - a);
+    const hasUndated = works.some(w => !w.year);
+
+    if (years.length === 0 && !hasUndated) {
+      const parent = yearsEl.closest('.nav-item');
+      if (parent) parent.style.display = 'none';
+      return;
+    }
+
+    const items = years.map(yr => `<li><a data-medium="${medium}" data-year="${yr}">${yr}</a></li>`);
+    if (hasUndated) items.push(`<li><a data-medium="${medium}" data-year="undated">Undated</a></li>`);
+    yearsEl.innerHTML = items.join('');
+  });
+}
+
+/* ── Navigation clicks ───────────────────────────────────── */
+function handleNavClick(e) {
+  const target = e.target.closest('[data-view], [data-medium], [data-year], .nav-medium');
+  if (!target) return;
+
+  if (target.dataset.view) {
+    const v = target.dataset.view;
+    showView(v === 'home' ? 'home' : v);
+    closeMenu();
+    return;
   }
 
-  function getYearsForMedium(medium) {
-    const works = artworks[medium] || [];
-    const years = [...new Set(works.map(w => w.year))].sort((a, b) => b - a);
-    return years;
+  if (target.dataset.year) {
+    showWorks(target.dataset.medium, target.dataset.year);
+    closeMenu();
+    $$('.nav-years a').forEach(a => a.classList.remove('active'));
+    target.classList.add('active');
+    return;
   }
 
-  function mediumLabel(medium) {
-    return { paintings: 'Paintings', 'works-on-paper': 'Works on Paper', sculpture: 'Sculpture' }[medium] || medium;
+  if (target.classList.contains('nav-medium')) {
+    const parent = target.closest('.nav-item');
+    const isOpen = parent.classList.contains('open');
+    $$('.nav-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) parent.classList.add('open');
   }
+}
 
-  // --- Build nav year lists ---
-  function buildNav() {
-    const mediums = ['paintings', 'works-on-paper', 'sculpture'];
-    mediums.forEach(medium => {
-      const ul = document.getElementById('years-' + medium);
-      if (!ul) return;
-      const years = getYearsForMedium(medium);
-      ul.innerHTML = years.map(year =>
-        `<li><a href="#" class="year-link" data-medium="${medium}" data-year="${year}">${year}</a></li>`
-      ).join('');
+/* ── Show works grid ─────────────────────────────────────── */
+function showWorks(medium, yearKey) {
+  const works = (artworks[medium] || []).filter(w => {
+    if (yearKey === 'undated') return !w.year;
+    return String(w.year) === String(yearKey);
+  });
+
+  state.currentMedium = medium;
+  state.currentYear   = yearKey;
+  state.currentWorks  = works;
+
+  const mediumLabel = {
+    'paintings':      'Paintings',
+    'works-on-paper': 'Works on Paper',
+    'sculpture':      'Sculpture',
+  }[medium] || medium;
+
+  worksLabel.textContent = `${mediumLabel}  ·  ${yearKey === 'undated' ? 'Undated' : yearKey}`;
+  showView('works');
+
+  grid.innerHTML = works.map((w, i) => `
+    <div class="grid-item" data-index="${i}">
+      <img src="${w.thumb}" alt="${w.title}" loading="lazy">
+      <div class="grid-item-caption">${w.title}</div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.grid-item').forEach(item => {
+    item.addEventListener('click', () => openLightbox(parseInt(item.dataset.index)));
+  });
+}
+
+/* ── Splash / home setup ─────────────────────────────────── */
+function setupSplash() {
+  const featured = allWorks().filter(w => w.year).sort((a, b) => b.year - a.year)[0];
+  if (!featured) return;
+
+  const splashImg = $('splash-img');
+  const splashCap = $('splash-caption');
+  splashImg.src = featured.img;
+  splashImg.alt = featured.title;
+  splashCap.textContent = `${featured.title}  ·  ${featured.year}`;
+
+  $('splash').addEventListener('click', () => {
+    state.currentWorks = [featured];
+    openLightbox(0);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   LIGHTBOX
+   ══════════════════════════════════════════════════════════ */
+
+function openLightbox(index) {
+  state.lbIndex = index;
+  const w = state.currentWorks[index];
+  if (!w) return;
+
+  lbImg.src = w.img;
+  lbImg.alt = w.title;
+  lbTitle.textContent = w.title;
+  lbInfo.textContent  = buildInfo(w);
+
+  buildFilmstrip();
+  updateFilmstripActive();
+
+  lbEl.classList.remove('hidden');
+  document.body.classList.add('lb-open');
+  exitZoom();
+}
+
+function closeLightbox() {
+  lbEl.classList.add('hidden');
+  document.body.classList.remove('lb-open');
+  exitZoom();
+}
+
+function buildInfo(w) {
+  const parts = [];
+  if (w.materials) parts.push(w.materials);
+  if (w.dims && !w.dims.includes('?')) parts.push(w.dims);
+  if (w.year) parts.push(w.year);
+  return parts.join('  ·  ');
+}
+
+function navigate(dir) {
+  const next = state.lbIndex + dir;
+  if (next < 0 || next >= state.currentWorks.length) return;
+  state.lbIndex = next;
+  const w = state.currentWorks[next];
+  lbImg.src = w.img;
+  lbImg.alt = w.title;
+  lbTitle.textContent = w.title;
+  lbInfo.textContent  = buildInfo(w);
+  updateFilmstripActive();
+  exitZoom();
+}
+
+function buildFilmstrip() {
+  lbFilmstrip.innerHTML = state.currentWorks.map((w, i) => `
+    <button class="lb-thumb-btn" data-index="${i}" aria-label="${w.title}">
+      <img src="${w.thumb}" alt="${w.title}">
+    </button>
+  `).join('');
+
+  lbFilmstrip.querySelectorAll('.lb-thumb-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.lbIndex = parseInt(btn.dataset.index);
+      const w = state.currentWorks[state.lbIndex];
+      lbImg.src = w.img;
+      lbImg.alt = w.title;
+      lbTitle.textContent = w.title;
+      lbInfo.textContent  = buildInfo(w);
+      updateFilmstripActive();
+      exitZoom();
     });
-  }
-
-  // --- Render works grid ---
-  function renderGrid(medium, year) {
-    const works = (artworks[medium] || []).filter(w => w.year === year);
-    sectionHeading.textContent = `${mediumLabel(medium)}, ${year}`;
-    worksGrid.innerHTML = works.map((w, i) =>
-      `<div class="grid-item" data-index="${i}" data-medium="${medium}" data-year="${year}">
-        <img src="${w.thumb}" alt="${w.title}" loading="lazy">
-      </div>`
-    ).join('');
-    lightboxItems = works;
-    showSection('works');
-  }
-
-  // --- Lightbox ---
-  function openLightbox(index) {
-    lightboxIndex = index;
-    renderLightboxImage();
-    renderFilmstrip();
-    lightbox.classList.remove('hidden');
-    document.body.classList.add('lb-open');
-  }
-
-  function closeLightbox() {
-    lightbox.classList.add('hidden');
-    document.body.classList.remove('lb-open');
-  }
-
-  function renderLightboxImage() {
-    const item = lightboxItems[lightboxIndex];
-    if (!item) return;
-    lbImg.src = item.img;
-    lbImg.alt = item.title;
-    lbCaption.innerHTML = `<span class="lb-title">${item.title}</span><span class="lb-dims">${item.dims}</span>`;
-    // Update filmstrip active state
-    document.querySelectorAll('.lb-thumb').forEach((el, i) => {
-      el.classList.toggle('active', i === lightboxIndex);
-      if (i === lightboxIndex) el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-    });
-  }
-
-  function renderFilmstrip() {
-    lbFilmstrip.innerHTML = lightboxItems.map((item, i) =>
-      `<img class="lb-thumb${i === lightboxIndex ? ' active' : ''}" src="${item.thumb}" alt="${item.title}" data-index="${i}">`
-    ).join('');
-  }
-
-  function prevImage() {
-    lightboxIndex = (lightboxIndex - 1 + lightboxItems.length) % lightboxItems.length;
-    renderLightboxImage();
-  }
-
-  function nextImage() {
-    lightboxIndex = (lightboxIndex + 1) % lightboxItems.length;
-    renderLightboxImage();
-  }
-
-  // --- Sidebar accordion ---
-  function toggleSection(medium) {
-    const navSection = document.getElementById('nav-' + medium);
-    const isOpen = navSection.classList.contains('open');
-    // Close all
-    document.querySelectorAll('.nav-section').forEach(s => s.classList.remove('open'));
-    if (!isOpen) navSection.classList.add('open');
-  }
-
-  // --- Mobile sidebar ---
-  function openSidebar() {
-    sidebar.classList.add('open');
-    sidebarOverlay.classList.add('visible');
-    hamburger.classList.add('active');
-  }
-
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('visible');
-    hamburger.classList.remove('active');
-  }
-
-  // --- Event listeners ---
-
-  // Hamburger
-  hamburger.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
   });
+}
 
-  sidebarOverlay.addEventListener('click', closeSidebar);
-
-  // Site name → about
-  document.querySelectorAll('[data-section="about"]').forEach(el => {
-    el.addEventListener('click', e => {
-      e.preventDefault();
-      showSection('about');
-    });
+function updateFilmstripActive() {
+  lbFilmstrip.querySelectorAll('.lb-thumb-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === state.lbIndex);
   });
+  const active = lbFilmstrip.querySelector('.lb-thumb-btn.active');
+  if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+}
 
-  // Nav section titles → accordion toggle
-  document.querySelectorAll('.nav-section-title').forEach(el => {
-    el.addEventListener('click', () => {
-      const medium = el.dataset.medium;
-      toggleSection(medium);
-    });
-  });
+/* Keyboard navigation */
+document.addEventListener('keydown', e => {
+  if (lbEl.classList.contains('hidden')) return;
+  if (e.key === 'Escape') {
+    if (!lbZoomView.classList.contains('hidden')) { exitZoom(); return; }
+    closeLightbox();
+  }
+  if (e.key === 'ArrowLeft')  navigate(-1);
+  if (e.key === 'ArrowRight') navigate(1);
+  if (e.key === 'z' || e.key === 'Z') toggleZoom();
+});
 
-  // Year links → render grid
-  navList.addEventListener('click', e => {
-    const link = e.target.closest('.year-link');
-    if (!link) return;
-    e.preventDefault();
-    const medium = link.dataset.medium;
-    const year = parseInt(link.dataset.year, 10);
-    // Mark active
-    document.querySelectorAll('.year-link').forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-    currentMedium = medium;
-    currentYear = year;
-    renderGrid(medium, year);
-  });
+/* ══════════════════════════════════════════════════════════
+   PAN-AND-ZOOM VIEWER
+   ══════════════════════════════════════════════════════════ */
 
-  // Works grid → open lightbox
-  worksGrid.addEventListener('click', e => {
-    const item = e.target.closest('.grid-item');
-    if (!item) return;
-    openLightbox(parseInt(item.dataset.index, 10));
-  });
+const zoom = {
+  scale:     1,
+  minScale:  0.3,
+  maxScale:  8,
+  tx:        0,
+  ty:        0,
+  dragging:  false,
+  lastX:     0,
+  lastY:     0,
+  pinchDist: null,
+};
 
-  // Lightbox controls
-  lbClose.addEventListener('click', closeLightbox);
-  lbPrev.addEventListener('click', prevImage);
-  lbNext.addEventListener('click', nextImage);
+function toggleZoom() {
+  lbZoomView.classList.contains('hidden') ? enterZoom() : exitZoom();
+}
 
-  lbFilmstrip.addEventListener('click', e => {
-    const thumb = e.target.closest('.lb-thumb');
-    if (!thumb) return;
-    lightboxIndex = parseInt(thumb.dataset.index, 10);
-    renderLightboxImage();
-  });
+function enterZoom() {
+  const w = state.currentWorks[state.lbIndex];
+  if (!w) return;
 
-  // Click outside image to close
-  lightbox.addEventListener('click', e => {
-    if (e.target === lightbox) closeLightbox();
-  });
+  zoomImg.src = w.img;
+  zoomImg.alt = w.title;
+  zoom.scale = 1;
+  zoom.tx = 0;
+  zoom.ty = 0;
 
-  // Keyboard navigation
-  document.addEventListener('keydown', e => {
-    if (lightbox.classList.contains('hidden')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') prevImage();
-    if (e.key === 'ArrowRight') nextImage();
-  });
+  const doFit = () => fitZoomImage();
+  if (zoomImg.complete && zoomImg.naturalWidth) { doFit(); }
+  else { zoomImg.onload = doFit; }
 
-  // --- Init ---
+  lbZoomView.classList.remove('hidden');
+  zoomHint.classList.remove('hide');
+  setTimeout(() => zoomHint.classList.add('hide'), 2800);
+  updateZoomIcon(true);
+}
+
+function fitZoomImage() {
+  const vw = lbZoomView.clientWidth;
+  const vh = lbZoomView.clientHeight;
+  const iw = zoomImg.naturalWidth  || 1200;
+  const ih = zoomImg.naturalHeight || 900;
+  const fit = Math.min(vw / iw, vh / ih) * 0.92;
+  zoom.scale    = fit;
+  zoom.minScale = fit * 0.4;
+  zoom.tx = 0;
+  zoom.ty = 0;
+  applyZoomTransform(false);
+}
+
+function exitZoom() {
+  lbZoomView.classList.add('hidden');
+  zoomImg.src = '';
+  updateZoomIcon(false);
+}
+
+function applyZoomTransform(animated) {
+  zoomCanvas.style.transition = animated ? 'transform 0.22s ease' : 'none';
+  zoomCanvas.style.transform  = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
+}
+
+function clampPan() {
+  const vw  = lbZoomView.clientWidth;
+  const vh  = lbZoomView.clientHeight;
+  const iw  = (zoomImg.naturalWidth  || 1200) * zoom.scale;
+  const ih  = (zoomImg.naturalHeight || 900)  * zoom.scale;
+  const maxX = Math.max(0, (iw - vw) / 2);
+  const maxY = Math.max(0, (ih - vh) / 2);
+  zoom.tx = Math.max(-maxX, Math.min(maxX, zoom.tx));
+  zoom.ty = Math.max(-maxY, Math.min(maxY, zoom.ty));
+}
+
+/* Wheel zoom */
+lbZoomView.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  const rect  = lbZoomView.getBoundingClientRect();
+  const ox    = e.clientX - rect.left  - rect.width  / 2;
+  const oy    = e.clientY - rect.top   - rect.height / 2;
+  const prev  = zoom.scale;
+  zoom.scale  = Math.min(zoom.maxScale, Math.max(zoom.minScale, zoom.scale * delta));
+  const r     = zoom.scale / prev;
+  zoom.tx     = ox - r * (ox - zoom.tx);
+  zoom.ty     = oy - r * (oy - zoom.ty);
+  clampPan();
+  applyZoomTransform(false);
+}, { passive: false });
+
+/* Mouse drag */
+lbZoomView.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  zoom.dragging = true;
+  zoom.lastX = e.clientX;
+  zoom.lastY = e.clientY;
+  lbZoomView.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', e => {
+  if (!zoom.dragging) return;
+  zoom.tx += e.clientX - zoom.lastX;
+  zoom.ty += e.clientY - zoom.lastY;
+  zoom.lastX = e.clientX;
+  zoom.lastY = e.clientY;
+  clampPan();
+  applyZoomTransform(false);
+});
+window.addEventListener('mouseup', () => {
+  if (!zoom.dragging) return;
+  zoom.dragging = false;
+  if (!lbZoomView.classList.contains('hidden')) lbZoomView.style.cursor = 'crosshair';
+});
+
+/* Touch */
+lbZoomView.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    zoom.pinchDist = pinchDist(e.touches);
+    zoom.dragging = false;
+  } else if (e.touches.length === 1) {
+    zoom.dragging = true;
+    zoom.lastX = e.touches[0].clientX;
+    zoom.lastY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+lbZoomView.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    const d = pinchDist(e.touches);
+    if (zoom.pinchDist) {
+      zoom.scale = Math.min(zoom.maxScale, Math.max(zoom.minScale, zoom.scale * d / zoom.pinchDist));
+    }
+    zoom.pinchDist = d;
+    clampPan();
+    applyZoomTransform(false);
+  } else if (e.touches.length === 1 && zoom.dragging) {
+    zoom.tx += e.touches[0].clientX - zoom.lastX;
+    zoom.ty += e.touches[0].clientY - zoom.lastY;
+    zoom.lastX = e.touches[0].clientX;
+    zoom.lastY = e.touches[0].clientY;
+    clampPan();
+    applyZoomTransform(false);
+  }
+}, { passive: false });
+
+lbZoomView.addEventListener('touchend', e => {
+  if (e.touches.length < 2) zoom.pinchDist = null;
+  if (e.touches.length === 0) zoom.dragging = false;
+});
+
+/* Double-click to zoom in/out */
+lbZoomView.addEventListener('dblclick', e => {
+  const rect   = lbZoomView.getBoundingClientRect();
+  const ox     = e.clientX - rect.left - rect.width  / 2;
+  const oy     = e.clientY - rect.top  - rect.height / 2;
+  const target = zoom.scale < 1.5 ? Math.min(zoom.maxScale, 2.5) : zoom.minScale * 1.5;
+  const ratio  = target / zoom.scale;
+  zoom.scale   = target;
+  zoom.tx      = ox - ratio * (ox - zoom.tx);
+  zoom.ty      = oy - ratio * (oy - zoom.ty);
+  clampPan();
+  applyZoomTransform(true);
+});
+
+function pinchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function updateZoomIcon(active) {
+  const btn = $('lb-zoom-toggle');
+  if (!btn) return;
+  if (active) {
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`;
+    btn.title = 'Exit zoom';
+  } else {
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`;
+    btn.title = 'Zoom in';
+  }
+}
+
+/* ── Init ────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
   buildNav();
-  showSection('home');
-})();
+  setupSplash();
+
+  document.addEventListener('click', handleNavClick);
+
+  $('lb-close').addEventListener('click', closeLightbox);
+  $('lb-prev').addEventListener('click',  () => navigate(-1));
+  $('lb-next').addEventListener('click',  () => navigate(1));
+  $('lb-zoom-toggle').addEventListener('click', toggleZoom);
+  $('zoom-exit').addEventListener('click', exitZoom);
+
+  $('hamburger').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+  $('sidebar-overlay').addEventListener('click', closeMenu);
+});
+
+function closeMenu() { document.body.classList.remove('menu-open'); }
