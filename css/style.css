@@ -60,7 +60,7 @@ ul { list-style: none; }
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 48px 32px 40px;
+  padding: 80px 32px 40px 40px;
 }
 
 /* Site name */
